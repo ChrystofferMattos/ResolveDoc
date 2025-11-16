@@ -1,5 +1,6 @@
 package com.example.resolvedoc.ui.screens
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -36,21 +37,25 @@ import com.example.resolvedoc.feature.pendencias.presentation.PendenciasViewMode
 @Composable
 fun PendenciasScreen(
     onBack: () -> Unit = {},
+    onPendenciaClick: (String) -> Unit,
     viewModel: PendenciasViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsState()
 
     PendenciasScreenContent(
         state = state,
-        onBack = onBack
+        onBack = onBack,
+        onPendenciaClick = onPendenciaClick
     )
 }
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun PendenciasScreenContent(
     state: PendenciasUiState,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    onPendenciaClick: (String) -> Unit
 ) {
     Scaffold(
         topBar = {
@@ -102,8 +107,12 @@ private fun PendenciasScreenContent(
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         items(state.pendencias) { pendencia ->
-                            PendenciaCard(pendencia = pendencia)
+                            PendenciaCard(
+                                pendencia = pendencia,
+                                onClick = { onPendenciaClick(pendencia.id) }
+                            )
                         }
+
                     }
                 }
             }
@@ -114,10 +123,13 @@ private fun PendenciasScreenContent(
 @Composable
 fun PendenciaCard(
     pendencia: Pendencia,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
 ) {
     Card(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
         elevation = CardDefaults.cardElevation()
     ) {
         Column(

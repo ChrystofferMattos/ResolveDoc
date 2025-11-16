@@ -40,18 +40,46 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.resolvedoc.feature.pendencias.presentation.DashboardViewModel
+import com.google.firebase.auth.FirebaseAuth
 
 data class PendenciaRecente(val titulo: String, val subtitulo: String, val status: String, val corStatus: Color)
 
 @Composable
-fun DashboardScreen(onBack: () -> Unit, onOpenPendencias: () -> Unit, onNavigateToReports: () -> Unit, onNewPendencia: () -> Unit, onNavigateToProfile: () -> Unit) {
+fun DashboardScreen(
+    onBack: () -> Unit,
+    onOpenPendencias: () -> Unit,
+    onNavigateToReports: () -> Unit,
+    onNewPendencia: () -> Unit,
+    onNavigateToProfile: () -> Unit,
+    viewModel: DashboardViewModel = hiltViewModel()
+) {
+    val state by viewModel.state.collectAsState()
 
-    val pendenciasRecentes = listOf(
-        PendenciaRecente("Dr. João Silva", "CID", "Aberta", MaterialTheme.colorScheme.error),
-        PendenciaRecente("Dr. Maria Jáca", "Atestado", "Em Análise", MaterialTheme.colorScheme.tertiary),
-        PendenciaRecente("Dr. João Silva", "Leboême", "Aberta", MaterialTheme.colorScheme.error),
-        PendenciaRecente("Dr. Maria Pádua", "Receita", "Resolvida", MaterialTheme.colorScheme.primary)
-    )
+    val currentUser = FirebaseAuth.getInstance().currentUser
+
+    val userName = currentUser?.displayName
+        ?: currentUser?.email?.substringBefore("@")
+        ?: "Coordenador(a)"
+
+    val pendenciasRecentes = state.pendenciasRecentes.map { p ->
+        val corStatus = when (p.status) {
+            "Aberta" -> MaterialTheme.colorScheme.error
+            "Em Análise" -> MaterialTheme.colorScheme.tertiary
+            "Resolvida" -> MaterialTheme.colorScheme.primary
+            else -> MaterialTheme.colorScheme.onSurfaceVariant
+        }
+
+        PendenciaRecente(
+            titulo = p.medico.ifBlank { "Sem médico" },
+            subtitulo = p.tipo.ifBlank { p.descricao.take(30) },
+            status = p.status.ifBlank { "Sem status" },
+            corStatus = corStatus
+        )
+    }
 
     Scaffold(
         topBar = { DashboardTopBar(onBack = onBack) },
@@ -66,25 +94,32 @@ fun DashboardScreen(onBack: () -> Unit, onOpenPendencias: () -> Unit, onNavigate
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
 
-
             item {
                 Text(
                     "Dashboard",
                     style = MaterialTheme.typography.headlineLarge,
                     modifier = Modifier.padding(top = 8.dp, bottom = 4.dp)
                 )
-                Text("Bem-vindo(a), Maria Coordenadora", style = MaterialTheme.typography.bodyLarge)
-                Text("Aguardando resolução", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.secondary)
+                Text(
+                    "Bem-vindo(a), $userName",
+                    style = MaterialTheme.typography.bodyLarge
+                )
+                Text(
+                    "Aguardando resolução",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.secondary
+                )
             }
-
 
             item {
                 StatsRow(
+                    abertas = state.abertas,
+                    resolvidas = state.resolvidas,
+                    tempoMedioResolucaoDias = state.tempoMedioResolucaoDias,
                     onOpenPendencias = onOpenPendencias,
                     onNavigateToReports = onNavigateToReports
                 )
             }
-
 
             item {
                 ActionsCard(
@@ -92,17 +127,28 @@ fun DashboardScreen(onBack: () -> Unit, onOpenPendencias: () -> Unit, onNavigate
                     onViewAll = onOpenPendencias,
                     onGenerateReports = onNavigateToReports,
                     onNavigateToProfile = onNavigateToProfile
-
                 )
             }
 
-
             item {
-                Text("Pendências Recentes", style = MaterialTheme.typography.titleLarge)
+                Text(
+                    "Pendências Recentes",
+                    style = MaterialTheme.typography.titleLarge
+                )
             }
 
-            items(pendenciasRecentes) { pendencia ->
-                PendenciaItem(pendencia = pendencia)
+            if (pendenciasRecentes.isEmpty()) {
+                item {
+                    Text(
+                        "Nenhuma pendência recente.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            } else {
+                items(pendenciasRecentes) { pendencia ->
+                    PendenciaItem(pendencia = pendencia)
+                }
             }
         }
     }
@@ -128,24 +174,38 @@ fun DashboardTopBar(onBack: () -> Unit) {
 }
 
 @Composable
-fun StatsRow(onOpenPendencias: () -> Unit, onNavigateToReports: () -> Unit) {
-    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+fun StatsRow(
+    abertas: Int,
+    resolvidas: Int,
+    tempoMedioResolucaoDias: Double?,
+    onOpenPendencias: () -> Unit,
+    onNavigateToReports: () -> Unit
+) {
+    val tempoMedioTexto = tempoMedioResolucaoDias?.let {
+        // Ex: "5.2 dias"
+        String.format("%.1f dias", it)
+    } ?: "N/D"
+
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        modifier = Modifier.fillMaxWidth()
+    ) {
         StatCard(
             title = "Pendências Abertas",
-            value = "2",
+            value = abertas.toString(),
             icon = Icons.AutoMirrored.Filled.List,
             modifier = Modifier.weight(1f),
             onClick = onOpenPendencias
         )
         StatCard(
             title = "Pendências Resolvidas",
-            value = "1",
+            value = resolvidas.toString(),
             icon = Icons.Default.CheckCircle,
-            modifier = Modifier.weight(1f),
+            modifier = Modifier.weight(1f)
         )
         StatCard(
             title = "Tempo Médio de Resolução",
-            value = "5 dias",
+            value = tempoMedioTexto,
             icon = Icons.Default.AccessTime,
             modifier = Modifier.weight(1f),
             onClick = onNavigateToReports
@@ -160,11 +220,19 @@ fun StatCard(
     icon: ImageVector,
     modifier: Modifier = Modifier,
     onClick: (() -> Unit)? = null
-
 ) {
-    Card(modifier = modifier, colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
+    Card(
+        modifier = modifier,
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
+        ),
+        onClick = onClick ?: {}
+    ) {
         Column(modifier = Modifier.padding(12.dp)) {
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
                 Text(title, style = MaterialTheme.typography.bodyMedium)
                 Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
             }
@@ -173,6 +241,7 @@ fun StatCard(
         }
     }
 }
+
 
 @Composable
 fun ActionsCard(onNewPendencia: () -> Unit, onViewAll: () -> Unit, onGenerateReports: () -> Unit,onNavigateToProfile: () -> Unit) {

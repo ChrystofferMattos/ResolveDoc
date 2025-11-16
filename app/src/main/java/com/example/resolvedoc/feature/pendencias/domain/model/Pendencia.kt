@@ -7,6 +7,6 @@ data class Pendencia(
     val descricao: String = "",
     val unidade: String = "",
     val status: String = "Aberto",
-    val enviadoEm: Long,
+    val enviadoEm: Long = 0L,
     val resolvidoEm: Long? = null
 )
