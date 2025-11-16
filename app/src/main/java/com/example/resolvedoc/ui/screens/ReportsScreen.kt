@@ -163,16 +163,16 @@ fun ChartsRow() {
         Card(modifier = Modifier.weight(1f).fillMaxHeight()) {
             Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.SpaceAround, modifier = Modifier.fillMaxSize().padding(12.dp)) {
                 Text("Pendências por Status", style = MaterialTheme.typography.titleMedium)
-                PieChartPlaceholder(size = 100.dp) // Gráfico de Pizza
-                ChartLegend(statusColors) // Legenda
+                PieChartPlaceholder(size = 100.dp)
+                ChartLegend(statusColors)
             }
         }
 
         Card(modifier = Modifier.weight(1f).fillMaxHeight()) {
             Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.SpaceAround, modifier = Modifier.fillMaxSize().padding(12.dp)) {
                 Text("Pendências por Médico", style = MaterialTheme.typography.titleMedium)
-                PieChartPlaceholder(size = 100.dp) // Gráfico de Pizza
-                ChartLegend(medicoColors) // Legenda
+                PieChartPlaceholder(size = 100.dp)
+                ChartLegend(medicoColors)
             }
         }
     }
