@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "635902082525",
+    "project_id": "resolvedoc-2b7b9",
+    "storage_bucket": "resolvedoc-2b7b9.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:635902082525:android:4b9e8d5d2dbfc200cb8a34",
+        "android_client_info": {
+          "package_name": "com.example.resolvedoc"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCzSQ8UkFrKwa_GniEizR19dniuFRiFHwU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
