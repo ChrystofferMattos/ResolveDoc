@@ -2,19 +2,23 @@ package com.example.resolvedoc.feature.auth.presentation
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.resolvedoc.feature.auth.domain.usecase.ChangePasswordUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import javax.inject.Inject
-import com.example.resolvedoc.feature.auth.domain.usecase.ChangePasswordUseCase
 
-data class PasswordUiState(
+data class ProfileUiState(
+    val name: String = "Profissional CEMAS",
+    val email: String = "usuario@cemas.vv.es.gov.br",
+
     val currentPassword: String = "",
     val newPassword: String = "",
     val confirmPassword: String = "",
+
     val isLoading: Boolean = false,
     val isSuccess: Boolean = false,
     val error: String? = null
@@ -22,51 +26,63 @@ data class PasswordUiState(
 
 @HiltViewModel
 class ProfileScreenViewModel @Inject constructor(
-    private val changePasswordUseCase: ChangePasswordUseCase,
+    private val changePasswordUseCase: ChangePasswordUseCase
 ) : ViewModel() {
 
-    private val _passwordState = MutableStateFlow(PasswordUiState())
-    val passwordState: StateFlow<PasswordUiState> = _passwordState.asStateFlow()
+    private val _state = MutableStateFlow(ProfileUiState())
+    val state: StateFlow<ProfileUiState> = _state.asStateFlow()
 
-
-    fun onCurrentPasswordChange(currentPassword: String) {
-        _passwordState.update { it.copy(currentPassword = currentPassword, error = null) }
+    fun updateCurrentPassword(currentPassword: String) {
+        _state.update { it.copy(currentPassword = currentPassword, error = null, isSuccess = false) }
     }
 
-    fun onNewPasswordChange(newPassword: String) {
-        _passwordState.update { it.copy(newPassword = newPassword, error = null) }
+    fun updateNewPassword(newPassword: String) {
+        _state.update { it.copy(newPassword = newPassword, error = null, isSuccess = false) }
     }
 
-    fun onConfirmPasswordChange(confirmPassword: String) {
-        _passwordState.update { it.copy(confirmPassword = confirmPassword, error = null) }
+    fun updateConfirmPassword(confirmPassword: String) {
+        _state.update { it.copy(confirmPassword = confirmPassword, error = null, isSuccess = false) }
     }
 
     fun resetPasswordState() {
-        _passwordState.update { it.copy(isSuccess = false, error = null) }
+        _state.update { it.copy(isSuccess = false, error = null) }
+    }
+
+    fun clearMessages() {
+        _state.update { it.copy(error = null, isSuccess = false) }
     }
 
     fun changePassword() {
-        val state = _passwordState.value
-        _passwordState.update { it.copy(isLoading = true, error = null) }
+        val current = _state.value
 
-        if (state.newPassword.isBlank() || state.confirmPassword.isBlank()) {
-            _passwordState.update { it.copy(error = "Preencha a nova senha.", isLoading = false) }
+        _state.update { it.copy(isLoading = true, error = null, isSuccess = false) }
+
+        if (current.newPassword.isBlank() || current.confirmPassword.isBlank()) {
+            _state.update {
+                it.copy(
+                    error = "Preencha a nova senha.",
+                    isLoading = false
+                )
+            }
             return
         }
 
-
-        if (state.newPassword != state.confirmPassword) {
-            _passwordState.update { it.copy(error = "As novas senhas não coincidem.", isLoading = false) }
+        if (current.newPassword != current.confirmPassword) {
+            _state.update {
+                it.copy(
+                    error = "As novas senhas não coincidem.",
+                    isLoading = false
+                )
+            }
             return
         }
 
         viewModelScope.launch {
             try {
+                // ✅ agora chamando o use case corretamente
+                changePasswordUseCase(current.currentPassword, current.newPassword)
 
-                changePasswordUseCase.execute(state.currentPassword, state.newPassword)
-
-
-                _passwordState.update {
+                _state.update {
                     it.copy(
                         currentPassword = "",
                         newPassword = "",
@@ -76,10 +92,11 @@ class ProfileScreenViewModel @Inject constructor(
                     )
                 }
             } catch (e: Exception) {
-                _passwordState.update {
+                _state.update {
                     it.copy(
                         error = "Falha ao alterar senha: ${e.message}",
-                        isLoading = false
+                        isLoading = false,
+                        isSuccess = false
                     )
                 }
             }

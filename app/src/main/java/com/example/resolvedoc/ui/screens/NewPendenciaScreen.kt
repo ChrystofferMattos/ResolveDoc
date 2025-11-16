@@ -10,46 +10,35 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material3.Button
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenuAnchorType
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.resolvedoc.feature.pendencias.presentation.NewPendenciaViewModel
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Box
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Color.Companion.Unspecified
-
-
-val tiposPendencia = listOf("Receita", "Atestado", "Prontuário", "Outro")
 
 @Composable
 fun NewPendenciaScreen(
@@ -58,24 +47,36 @@ fun NewPendenciaScreen(
 ) {
 
     val isSaved by viewModel.isSaved.collectAsState()
+    val isSaving by viewModel.isSaving.collectAsState()
+    val error by viewModel.error.collectAsState()
+
 
     var medico by remember { mutableStateOf("") }
     var tipo by remember { mutableStateOf("") }
     var descricao by remember { mutableStateOf("") }
     var unidade by remember { mutableStateOf("") }
-    var isSaving by remember { mutableStateOf(false) }
+
+    val snackbarHostState = remember { SnackbarHostState() }
 
 
     LaunchedEffect(isSaved) {
         if (isSaved) {
-            isSaving = false
             onBack()
             viewModel.resetSavedState()
         }
     }
 
+
+    LaunchedEffect(error) {
+        error?.let { message ->
+            snackbarHostState.showSnackbar(message)
+            viewModel.clearError()
+        }
+    }
+
     Scaffold(
         topBar = { NewPendenciaTopBar(onBack = onBack) },
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         modifier = Modifier.fillMaxSize()
     ) { paddingValues ->
 
@@ -98,20 +99,28 @@ fun NewPendenciaScreen(
                 value = medico,
                 onValueChange = { medico = it },
                 label = { Text("Nome do Médico") },
-                modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 12.dp)
             )
 
-            TipoDropdown(
-                selectedTipo = tipo,
-                onTipoSelected = { tipo = it },
-                tipos = tiposPendencia
+            // AGORA O TIPO É DIGITÁVEL
+            OutlinedTextField(
+                value = tipo,
+                onValueChange = { tipo = it },
+                label = { Text("Tipo de Pendência") },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 12.dp)
             )
 
             OutlinedTextField(
                 value = unidade,
                 onValueChange = { unidade = it },
                 label = { Text("Unidade de Saúde") },
-                modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 12.dp)
             )
 
             OutlinedTextField(
@@ -119,18 +128,23 @@ fun NewPendenciaScreen(
                 onValueChange = { descricao = it },
                 label = { Text("Detalhes e Descrição do Erro") },
                 minLines = 4,
-                modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 24.dp)
             )
 
             Button(
                 onClick = {
-                    if (!isSaving) {
-                        isSaving = true
-                        viewModel.savePendencia(medico, tipo, descricao, unidade)
-                    }
+                    viewModel.savePendencia(medico, tipo, descricao, unidade)
                 },
-                modifier = Modifier.fillMaxWidth().height(50.dp),
-                enabled = medico.isNotBlank() && tipo.isNotBlank() && descricao.isNotBlank() && unidade.isNotBlank() && !isSaving // Validação de todos os campos
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(50.dp),
+                enabled = medico.isNotBlank() &&
+                        tipo.isNotBlank() &&
+                        descricao.isNotBlank() &&
+                        unidade.isNotBlank() &&
+                        !isSaving
             ) {
                 if (isSaving) {
                     CircularProgressIndicator(
@@ -146,6 +160,7 @@ fun NewPendenciaScreen(
         }
     }
 }
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NewPendenciaTopBar(onBack: () -> Unit) {
@@ -164,52 +179,4 @@ fun NewPendenciaTopBar(onBack: () -> Unit) {
             actionIconContentColor = Color.Unspecified
         )
     )
-}
-
-
-@Composable
-
-fun TipoDropdown(selectedTipo: String, onTipoSelected: (String) -> Unit, tipos: List<String>) {
-    var expanded by remember { mutableStateOf(false) }
-
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(bottom = 12.dp)
-    ) {
-        OutlinedTextField(
-            readOnly = true,
-            value = if (selectedTipo.isBlank()) "Selecione o Tipo" else selectedTipo,
-            onValueChange = { },
-            label = { Text("Tipo de Pendência") },
-
-
-            trailingIcon = {
-                Icon(Icons.Default.ArrowDropDown, contentDescription = "Expandir")
-            },
-
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable { expanded = true }
-        )
-
-
-        DropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false },
-            // Garante que o menu tenha a mesma largura do TextField
-            modifier = Modifier.fillMaxWidth(0.9f)
-        ) {
-            tipos.forEach { selectionOption ->
-                DropdownMenuItem(
-                    text = { Text(selectionOption) },
-                    onClick = {
-                        onTipoSelected(selectionOption)
-                        expanded = false
-                    },
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
-        }
-    }
 }

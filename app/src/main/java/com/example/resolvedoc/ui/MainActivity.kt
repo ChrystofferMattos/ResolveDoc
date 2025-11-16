@@ -120,8 +120,7 @@ fun AppNavHost() {
             )
         }
         composable("new_pendencia") {
-            NewPendenciaScreen(
-                onBack = { navController.popBackStack("dashboard", false) }
+            NewPendenciaScreen(onBack = { navController.popBackStack() }
             )
         }
         composable("pendencias") {

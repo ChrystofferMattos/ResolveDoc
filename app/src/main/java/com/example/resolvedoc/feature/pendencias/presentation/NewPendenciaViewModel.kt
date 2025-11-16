@@ -3,28 +3,26 @@ package com.example.resolvedoc.feature.pendencias.presentation
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.resolvedoc.feature.pendencias.domain.usecase.CreatePendenciaUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import com.example.resolvedoc.feature.pendencias.domain.usecase.CreatePendenciaUseCase
-
+import kotlinx.coroutines.launch
 
 @HiltViewModel
 class NewPendenciaViewModel @Inject constructor(
-
     private val createPendenciaUseCase: CreatePendenciaUseCase
 ) : ViewModel() {
 
     private val _isSaved = MutableStateFlow(false)
-    val isSaved: StateFlow<Boolean> = _isSaved.asStateFlow()
+    val isSaved: StateFlow<Boolean> = _isSaved
 
-    fun resetSavedState() {
-        _isSaved.value = false
-    }
+    private val _isSaving = MutableStateFlow(false)
+    val isSaving: StateFlow<Boolean> = _isSaving
 
+    private val _error = MutableStateFlow<String?>(null)
+    val error: StateFlow<String?> = _error
 
     fun savePendencia(
         medico: String,
@@ -33,25 +31,50 @@ class NewPendenciaViewModel @Inject constructor(
         unidade: String
     ) {
         viewModelScope.launch {
+            val medicoTrimmed = medico.trim()
+            val tipoTrimmed = tipo.trim()
+            val descricaoTrimmed = descricao.trim()
+            val unidadeTrimmed = unidade.trim()
+
+            // Validação simples
+            if (
+                medicoTrimmed.isBlank() ||
+                tipoTrimmed.isBlank() ||
+                descricaoTrimmed.isBlank() ||
+                unidadeTrimmed.isBlank()
+            ) {
+                _error.value = "Preencha todos os campos."
+                return@launch
+            }
+
             _isSaved.value = false
+            _isSaving.value = true
+            _error.value = null
+
             try {
-
-                createPendenciaUseCase.invoke(medico, tipo, descricao, unidade)
-                _isSaved.value = true
-
                 Log.d("FIREBASE_TEST", "Iniciando salvamento...")
-                createPendenciaUseCase.invoke(medico, tipo, descricao, unidade)
+                createPendenciaUseCase(
+                    medicoTrimmed,
+                    tipoTrimmed,
+                    descricaoTrimmed,
+                    unidadeTrimmed
+                )
                 _isSaved.value = true
                 Log.d("FIREBASE_TEST", "Salvamento concluído com sucesso!")
-
             } catch (e: Exception) {
-
-                Log.e("NewPendenciaVM", "Falha ao salvar pendência", e)
-
-                _isSaved.value = false
-
-                Log.e("FIREBASE_TEST", "Falha catastrófica ao salvar. Verifique REGRAS e DEPENDÊNCIAS.", e)
+                Log.e("FIREBASE_TEST", "Erro ao salvar pendência", e)
+                _error.value = e.message ?: "Erro ao salvar pendência."
+            } finally {
+                _isSaving.value = false
             }
         }
+    }
+
+    fun clearError() {
+        _error.value = null
+    }
+
+    fun resetSavedState() {
+        _isSaved.value = false
     }
 }
