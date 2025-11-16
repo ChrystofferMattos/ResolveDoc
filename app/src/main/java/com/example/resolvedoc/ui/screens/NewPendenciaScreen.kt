@@ -183,18 +183,17 @@ fun TipoDropdown(selectedTipo: String, onTipoSelected: (String) -> Unit, tipos: 
             onValueChange = { },
             label = { Text("Tipo de Pendência") },
 
-            // ⬅️ Ícone de seta simples
+
             trailingIcon = {
                 Icon(Icons.Default.ArrowDropDown, contentDescription = "Expandir")
             },
 
-            // ⬅️ AÇÃO PRINCIPAL: Adiciona o Modifier.clickable para abrir o menu
             modifier = Modifier
                 .fillMaxWidth()
                 .clickable { expanded = true }
         )
 
-        // ⬅️ Usa o DropdownMenu simples (não Exposed)
+
         DropdownMenu(
             expanded = expanded,
             onDismissRequest = { expanded = false },

@@ -26,7 +26,6 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.TopAppBar
 import androidx.compose.ui.graphics.vector.ImageVector
-
 import androidx.compose.ui.text.style.TextAlign
 
 data class Estatistica(val title: String, val value: String, val secondary: String, val icon: ImageVector? = null, val valueColor: Color = Color.Unspecified)
