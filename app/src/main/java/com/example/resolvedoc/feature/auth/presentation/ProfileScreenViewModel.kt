@@ -33,29 +33,65 @@ class ProfileScreenViewModel @Inject constructor(
     val state: StateFlow<ProfileUiState> = _state.asStateFlow()
 
     fun updateCurrentPassword(currentPassword: String) {
-        _state.update { it.copy(currentPassword = currentPassword, error = null, isSuccess = false) }
+        _state.update {
+            it.copy(
+                currentPassword = currentPassword,
+                error = null,
+                isSuccess = false
+            )
+        }
     }
 
     fun updateNewPassword(newPassword: String) {
-        _state.update { it.copy(newPassword = newPassword, error = null, isSuccess = false) }
+        _state.update {
+            it.copy(
+                newPassword = newPassword,
+                error = null,
+                isSuccess = false
+            )
+        }
     }
 
     fun updateConfirmPassword(confirmPassword: String) {
-        _state.update { it.copy(confirmPassword = confirmPassword, error = null, isSuccess = false) }
+        _state.update {
+            it.copy(
+                confirmPassword = confirmPassword,
+                error = null,
+                isSuccess = false
+            )
+        }
     }
 
     fun resetPasswordState() {
-        _state.update { it.copy(isSuccess = false, error = null) }
+        _state.update {
+            it.copy(
+                isSuccess = false,
+                error = null
+            )
+        }
     }
 
     fun clearMessages() {
-        _state.update { it.copy(error = null, isSuccess = false) }
+        _state.update {
+            it.copy(
+                error = null,
+                isSuccess = false
+            )
+        }
     }
 
     fun changePassword() {
         val current = _state.value
 
-        _state.update { it.copy(isLoading = true, error = null, isSuccess = false) }
+        if (current.currentPassword.isBlank()) {
+            _state.update {
+                it.copy(
+                    error = "Preencha a senha atual.",
+                    isLoading = false
+                )
+            }
+            return
+        }
 
         if (current.newPassword.isBlank() || current.confirmPassword.isBlank()) {
             _state.update {
@@ -77,9 +113,11 @@ class ProfileScreenViewModel @Inject constructor(
             return
         }
 
+        _state.update { it.copy(isLoading = true, error = null, isSuccess = false) }
+
         viewModelScope.launch {
             try {
-                // ✅ agora chamando o use case corretamente
+
                 changePasswordUseCase(current.currentPassword, current.newPassword)
 
                 _state.update {
@@ -95,8 +133,7 @@ class ProfileScreenViewModel @Inject constructor(
                 _state.update {
                     it.copy(
                         error = "Falha ao alterar senha: ${e.message}",
-                        isLoading = false,
-                        isSuccess = false
+                        isLoading = false
                     )
                 }
             }

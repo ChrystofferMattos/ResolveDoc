@@ -53,6 +53,7 @@ dependencies {
         implementation("androidx.compose.ui:ui-tooling-preview")
         implementation(libs.androidx.compose.ui.unit)
         implementation(libs.androidx.compose.foundation.layout)
+        implementation(libs.androidx.room.ktx)
         debugImplementation("androidx.compose.ui:ui-tooling")
         implementation("androidx.activity:activity-compose:1.9.3")
         implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.4")

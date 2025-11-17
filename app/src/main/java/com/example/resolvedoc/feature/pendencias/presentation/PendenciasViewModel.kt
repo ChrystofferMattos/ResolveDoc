@@ -40,9 +40,11 @@ class PendenciasViewModel @Inject constructor(
                     )
                 }
                 .collect { pendencias ->
+                    val ordenadas = pendencias.sortedByDescending { it.enviadoEm }
+
                     _state.value = _state.value.copy(
                         isLoading = false,
-                        pendencias = pendencias,
+                        pendencias = ordenadas,
                         error = null
                     )
                 }

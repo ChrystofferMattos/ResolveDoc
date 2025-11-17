@@ -13,9 +13,8 @@ import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 import android.content.Context
-import androidx.lifecycle.viewModelScope
 import com.example.resolvedoc.feature.pendencias.report.ReportPdfGenerator
-import kotlinx.coroutines.launch
+
 
 data class MedicoResumo(
     val medico: String,
@@ -31,9 +30,9 @@ data class ReportsUiState(
     val total: Int = 0,
     val abertas: Int = 0,
     val resolvidas: Int = 0,
-    val taxaResolucao: Int = 0, // em %
+    val taxaResolucao: Int = 0,
 
-    val tempoMedioResolucaoDias: Double? = null, // null = não calculado
+    val tempoMedioResolucaoDias: Double? = null,
 
     val porStatus: Map<String, Int> = emptyMap(),
     val porTipo: Map<String, Int> = emptyMap(),

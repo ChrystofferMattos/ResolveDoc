@@ -126,7 +126,7 @@ fun NewPendenciaScreen(
             OutlinedTextField(
                 value = descricao,
                 onValueChange = { descricao = it },
-                label = { Text("Detalhes e Descrição do Erro") },
+                label = { Text("Detalhes e Descrição da Pendência") },
                 minLines = 4,
                 modifier = Modifier
                     .fillMaxWidth()

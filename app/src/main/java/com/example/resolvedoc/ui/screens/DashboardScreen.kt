@@ -182,7 +182,7 @@ fun StatsRow(
     onNavigateToReports: () -> Unit
 ) {
     val tempoMedioTexto = tempoMedioResolucaoDias?.let {
-        // Ex: "5.2 dias"
+
         String.format("%.1f dias", it)
     } ?: "N/D"
 
